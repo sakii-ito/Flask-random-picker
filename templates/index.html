@@ -4,30 +4,226 @@
   <meta charset="UTF-8">
   <title>🎲 랜덤 뽑기</title>
   <style>
+    * {box_sizing: border-box; margin: 0; padding: 0; }
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #0f0f1a;
-      color: #f0f0f0;        
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 16px;
-      min-height: 100vh;
+        font-family: 'Segoe UI', sans-serif;
+        background: #0f0f1a;
+        color: #f0f0f0;
+        min-height: 100vh;
+        padding: 32px 16px;
     }
 
     h1 {
+      text-align: center;
       font-size: 2.2rem;
       background: linear-gradient(135deg, #a78bfa, #60a5fa);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
-    p { color: #888; font-size: 0.9rem; }
+    .subtitle {
+      text-align: center;
+      color: #888;
+      font-size: 0.9rem;
+      margin-bottom: 32px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #1a1a2e;
+      border: 1px solid #2a2a4a;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+     .card h2 {
+      font-size: 1rem;
+      color: #a78bfa;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* 아이템 태그 */
+    .items-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 40px;
+    }
+
+    .item-tag {
+      background: #2a2a4a;
+      border: 1px solid #3a3a6a;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: border-color 0.2s;
+    }
+
+    .item-tag:hover { border-color: #a78bfa; }
+
+    .del-btn {
+      cursor: pointer;
+      color: #666;
+      font-size: 0.75rem;
+      transition: color 0.2s;
+    }
+
+    .del-btn:hover { color: #f87171; }
+
+    /* 추가 입력 */
+    .add-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: #0f0f1a;
+      border: 1px solid #2a2a4a;
+      border-radius: 10px;
+      padding: 10px 14px;
+      color: #f0f0f0;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus { border-color: #a78bfa; }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-purple {
+      background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      color: white;
+    }
+
+    .btn-purple:hover { opacity: 0.85; transform: translateY(-1px); }
+
+    /* 토스트 알림 */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1a1a2e;
+      border: 1px solid #a78bfa;
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-size: 0.9rem;
+      color: #c4b5fd;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .toast.show { opacity: 1; }
+
   </style>
 </head>
 <body>
   <h1>🎲 랜덤 뽑기</h1>
-  <p>Flask로 만든 미니 웹앱 포트폴리오</p>
+  <p class="subtitle">Flask로 만든 미니 웹앱 포트폴리오</p>
+
+  <div class="container">
+    <div class="card">
+        <h2>📋 목록</h2>
+
+        <!-- Flask가 넘겨준 items 목록을 태그로 표시 -->
+         <div class="items-grid" id="items-grid">
+            {% for item in items %}
+            <div class="item-tag" id="tag-{{ item }}">
+                {{ item }}
+                <span class="del-btn" onclick="deleteItem('{{ item }}')">✕</span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- 아이템 추가 입력창 -->
+        <div class="add-row">
+            <input type="text" id="new-item"
+                    placeholder="추가할 항목 입력..."
+                    onkeydown="if(event.key==='Enter') assItem()">
+            <button class="btn btn-purple" onclick="addItem()">추가</button>
+        </div>
+    </div>
+</div>
+
+<div class"toast" id="toast"></div>
+
+<script>
+    // 아이템 추가
+    async function addItem() {
+        const input = document.getElementById('new-item');
+    const item = input.value.trim();
+    if (!item) return;
+    
+    // POST /add 로 아이템 이름 전송
+    const res = await fetch('/add', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ item })
+    });
+
+    const data = await res.json();
+    if (data.error) { showToast('❌ ' + data.error); return; 
+    }
+
+    // 태그를 화면에 바로 추가
+    const grid = document.getElementById('items-grid');
+    const tag = document.createElement('div');
+    tag.className = 'item-tag';
+    tag.id = 'tag-' + item;
+    tag.innerHTML = `${item} <span class="del-btn" onclick="deleteItem('${item}')">✕</span>`;
+    grid.appendChild(tag);
+
+    input.value = '';
+    showToast('✅ ' + item + ' 추가됨!');
+    }
+
+    // 아이템 삭제 
+    async function deleteItem(item) {
+    const res = await fetch('/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ item })
+    });
+
+    const data = await res.json();
+    if (data.error) { showToast('❌ ' + data.error); return; }
+
+    // 태그 화면에서 제거
+    document.getElementById('tag-' + item)?.remove();
+    showToast('🗑️ ' + item + ' 삭제됨!');
+  }
+
+  // 토스트 알림 
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+</script>
+
 </body>
 </html>

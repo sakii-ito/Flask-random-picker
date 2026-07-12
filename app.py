@@ -1,5 +1,6 @@
 # Flask web application 만들기
-
+import random
+from datetime import datetime
 from flask import Flask, render_template, request
 
 # Appication 생성
@@ -60,6 +61,31 @@ def delete_item():
     # 목록에서 제거
     items.remove(item)
     return {"status": "ok", "items": items}
+
+@app.route("/pick")
+def pick():
+    """
+    랜덤 뽑기 API
+    쿼리 파라미터: ?count=N (몇 개 뽑을지, 기본값=1)
+    Response: {"picked": ["짜장면"], "timestamp": "20:15:30"}
+    """
+    # URL에서 count 값 읽기 (?count=3 이런 식으로)
+    count = request.args.get("count", 1, type=int)
+    
+    # 입력값 검증
+    if count < 1:
+        return {"error": "1개 이상 뽑아야 해요!"}, 400
+    if count > len(items):
+        return {"error": f"목록에 {len(items)}개밖에 없어요!"}, 400
+    
+    # 중복 없이 랜덤 뽑기
+    # random.sample(items, count)
+    picked = random.sample(items, count)
+    
+    # 현재 시간 기록
+    timestamp = datetime.now().strftime("%H:%M:%S")
+    
+    return {"picked": picked, "timestamp": timestamp}
 # Application 실행
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

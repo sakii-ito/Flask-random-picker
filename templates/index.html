@@ -138,6 +138,28 @@
 
     .toast.show { opacity: 1; }
 
+    .btn-blue {
+  background: linear-gradient(135deg, #2563eb, #06b6d4);
+  color: white;
+}
+
+.btn-blue:hover { opacity: 0.85; transform: translateY(-1px); }
+
+.result-item {
+  background: linear-gradient(135deg, #7c3aed33, #4f46e533);
+  border: 1px solid #7c3aed;
+  border-radius: 12px;
+  padding: 10px 20px;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #c4b5fd;
+  animation: popIn 0.3s ease;
+}
+
+@keyframes popIn {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
   </style>
 </head>
 <body>
@@ -166,6 +188,32 @@
             <button class="btn btn-purple" onclick="addItem()">추가</button>
         </div>
     </div>
+    <!-- 뽑기 카드 -->
+  <div class="card">
+    <h2>🎯 뽑기</h2>
+
+    <!-- 몇 개 뽑을지 선택 -->
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:14px;">
+      <label style="color:#aaa; font-size:0.9rem;">몇 개 뽑을까요?</label>
+      <input type="number" id="count" value="1" min="1" max="10"
+             style="width:60px; background:#0f0f1a; border:1px solid #2a2a4a;
+                    border-radius:8px; padding:6px 10px; color:#f0f0f0;
+                    font-size:0.95rem; text-align:center; outline:none;">
+    </div>
+
+    <!-- 뽑기 버튼 -->
+    <button class="btn btn-blue" style="width:100%; padding:14px;"
+            onclick="pickRandom()">
+      🎲 뽑기 시작!
+    </button>
+
+    <!-- 결과 표시 -->
+    <div id="result-box"
+         style="min-height:60px; display:flex; align-items:center;
+                justify-content:center; flex-wrap:wrap; gap:10px; margin-top:16px;">
+      <span style="color:#444; font-size:0.9rem;">버튼을 눌러 뽑기 시작!</span>
+    </div>
+  </div>
 </div>
 
 <div class"toast" id="toast"></div>
@@ -187,6 +235,7 @@
     const data = await res.json();
     if (data.error) { showToast('❌ ' + data.error); return; 
     }
+
 
     // 태그를 화면에 바로 추가
     const grid = document.getElementById('items-grid');
@@ -223,6 +272,25 @@
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 2000);
   }
+
+  // 랜덤 뽑기 
+async function pickRandom() {
+  const count = document.getElementById('count').value;
+
+  // GET /pick?count=N 으로 요청
+  const res = await fetch(`/pick?count=${count}`);
+  const data = await res.json();
+
+  if (data.error) { showToast('❌ ' + data.error); return; }
+
+  // 결과 표시 (애니메이션 포함!)
+  const resultBox = document.getElementById('result-box');
+  resultBox.innerHTML = data.picked
+    .map(p => `<div class="result-item">🎉 ${p}</div>`)
+    .join('');
+    
+   showToast('🎲 뽑기 완료!');
+}
 </script>
 
 </body>

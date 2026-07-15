@@ -11,7 +11,7 @@ app = Flask(__name__)
 # 실제 서비스라면 DB를 써야 한다.
 # =====================================================
 items = ["짜장면", "짬뽕", "볶음밥", "탕수육", "마파두부"]
-
+history = []
 
 @app.route("/")
 def index():
@@ -19,7 +19,7 @@ def index():
     메인 페이지 - 현재 아이템 목록을 HTML로 전달
     """
     # items를 HTML의 {{ items }}에 전달
-    return render_template("index.html", items=items)
+    return render_template("index.html", items=items, history=history)
 
 @app.route("/add", methods=["POST"])
 def add_item():
@@ -85,6 +85,11 @@ def pick():
     # 현재 시간 기록
     timestamp = datetime.now().strftime("%H:%M:%S")
     
+    # 히스토리 기록! (최신순, 최대 10개)
+    history.insert(0, {"picked": picked, "timestamp": timestamp})
+    if len(history) > 10:
+        history.pop()
+        
     return {"picked": picked, "timestamp": timestamp}
 # Application 실행
 if __name__ == "__main__":

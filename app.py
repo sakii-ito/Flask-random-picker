@@ -91,6 +91,17 @@ def pick():
         history.pop()
         
     return {"picked": picked, "timestamp": timestamp}
+
+@app.route("/reset", methods=["POST"])
+def reset():
+    """
+    목록과 히스토리를 기본값으로 초기화
+    """
+    # global = 함수 밖에 있는 변수를 수정할 때 필요!
+    global items, history
+    items = ["짜장면", "짬뽕", "볶음밥", "탕수육", "마파두부"]
+    history = []
+    return {"status": "ok", "items": items}
 # Application 실행
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

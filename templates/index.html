@@ -7,8 +7,8 @@
     * {box_sizing: border-box; margin: 0; padding: 0; }
     body {
         font-family: 'Segoe UI', sans-serif;
-        background: #0f0f1a;
-        color: #f0f0f0;
+        background: #f0fdf4;
+        color: #86efac; 
         min-height: 100vh;
         padding: 32px 16px;
     }
@@ -16,7 +16,7 @@
     h1 {
       text-align: center;
       font-size: 2.2rem;
-      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      background: linear-gradient(135deg, #22c55e, #16a34a);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       margin-bottom: 6px;
@@ -35,8 +35,8 @@
     }
 
     .card {
-      background: #1a1a2e;
-      border: 1px solid #2a2a4a;
+      background: #ffffff;  
+      border: 1px solid #bbf7d0
       border-radius: 16px;
       padding: 24px;
       margin-bottom: 20px;
@@ -59,8 +59,8 @@
     }
 
     .item-tag {
-      background: #2a2a4a;
-      border: 1px solid #3a3a6a;
+      background: #dcfce7;
+      border: 1px solid #86efac;
       border-radius: 20px;
       padding: 6px 14px;
       font-size: 0.9rem;
@@ -68,18 +68,19 @@
       align-items: center;
       gap: 8px;
       transition: border-color 0.2s;
+      color: #166534; 
     }
 
-    .item-tag:hover { border-color: #a78bfa; }
+    .item-tag:hover { border-color: #22c55e; }
 
     .del-btn {
       cursor: pointer;
-      color: #666;
+      color: #86efac;
       font-size: 0.75rem;
       transition: color 0.2s;
     }
 
-    .del-btn:hover { color: #f87171; }
+    .del-btn:hover { color: #ef4444; }
 
     /* 추가 입력 */
     .add-row {
@@ -90,17 +91,17 @@
 
     input[type="text"] {
       flex: 1;
-      background: #0f0f1a;
-      border: 1px solid #2a2a4a;
+      background: #ffffff;
+      border: 1px solid #86efac;
       border-radius: 10px;
       padding: 10px 14px;
-      color: #f0f0f0;
+      color: #86efac
       font-size: 0.95rem;
       outline: none;
       transition: border-color 0.2s;
     }
 
-    input[type="text"]:focus { border-color: #a78bfa; }
+    input[type="text"]:focus { border-color: #22c55e; }
 
     .btn {
       padding: 10px 20px;
@@ -125,12 +126,12 @@
       bottom: 24px;
       left: 50%;
       transform: translateX(-50%);
-      background: #1a1a2e;
-      border: 1px solid #a78bfa;
+      background: #ffffff;
+      border: 1px solid #86efac;
       border-radius: 10px;
       padding: 10px 20px;
       font-size: 0.9rem;
-      color: #c4b5fd;
+      color: #166534;
       opacity: 0;
       transition: opacity 0.3s;
       pointer-events: none;
@@ -139,7 +140,7 @@
     .toast.show { opacity: 1; }
 
     .btn-blue {
-  background: linear-gradient(135deg, #2563eb, #06b6d4);
+  background: linear-gradient(135deg, #22c55e, #16a34a);
   color: white;
 }
 
@@ -152,7 +153,7 @@
   padding: 10px 20px;
   font-size: 1.3rem;
   font-weight: 700;
-  color: #c4b5fd;
+  color: #166534;
   animation: popIn 0.3s ease;
 }
 
@@ -166,10 +167,18 @@
   justify-content: space-between;
   align-items: center;
   padding: 8px 12px;
-  background: #0f0f1a;
+  background: #bbf7d0;
   border-radius: 8px;
   font-size: 0.85rem;
 }
+
+.btn-green {
+  background: #bbf7d0;
+  color: #166534;
+}
+
+.btn-green:hover { opacity: 0.85; transform: translateY(-1px); }
+
   </style>
 </head>
 <body>
@@ -193,9 +202,10 @@
         <!-- 아이템 추가 입력창 -->
         <div class="add-row">
             <input type="text" id="new-item"
-                    placeholder="추가할 항목 입력..."
-                    onkeydown="if(event.key==='Enter') addItem()">
+                  placeholder="추가할 항목 입력..."
+                  onkeydown="if(event.key==='Enter') addItem()">
             <button class="btn btn-purple" onclick="addItem()">추가</button>
+            <button class="btn btn-green" onclick="resetAll()">초기화</button>
         </div>
     </div>
     <!-- 뽑기 카드 -->
@@ -294,6 +304,35 @@
     // 태그 화면에서 제거
     document.getElementById('tag-' + item)?.remove();
     showToast('🗑️ ' + item + ' 삭제됨!');
+  }
+
+  // 초기화
+  async function resetAll() {
+    // 정말 초기화할지 한 번 더 확인!
+    if (!confirm('목록과 히스토리를 초기화할까요?')) return;
+
+    const res = await fetch('/reset', { method: 'POST' });
+    const data = await res.json();
+
+    // 목록 새로고침
+    const grid = document.getElementById('items-grid');
+    grid.innerHTML = data.items
+      .map(item => `
+        <div class="item-tag" id="tag-${item}">
+          ${item}
+          <span class="del-btn" onclick="deleteItem('${item}')">✕</span>
+        </div>
+    ` ).join('');
+
+    // 히스토리 초기화
+    document.getElementById('history-list').innerHTML =
+      '<span id="empty-msg" style="color:#444; font-size:0.85rem;">아직 뽑기 기록이 없어요!</span>';
+
+    // 결과 초기화
+    document.getElementById('result-box').innerHTML =
+      '<span style="color:#444; font-size:0.9rem;">버튼을 눌러 뽑기 시작!</span>';
+
+    showToast('🔄 초기화 완료!');
   }
 
   // 토스트 알림 
